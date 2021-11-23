@@ -1,0 +1,31 @@
+#!/bin/sh
+#
+# 20-user-count - User is the only user on the server
+#
+# Copyright © 2021 Paul Stead
+#
+set -eu
+
+ME=molly-guard
+
+[ -f "$MOLLYGUARD_SETTINGS" ] && . "$MOLLYGUARD_SETTINGS"
+
+# require an interactive terminal connected to stdin
+test -t 0 || exit 0
+
+sigh()
+{
+  echo "Too many users logged in. Log them out and I will allow $MOLLYGUARD_CMD ..." >&2
+  exit 1
+}
+
+trap 'echo;sigh' 1 2 3 9 10 12 15
+
+USERCOUNT="$(users | xargs -n 1 | sort -u | wc -w)"
+
+[ "$USERCOUNT" = "1" ] || sigh
+
+trap - 1 2 3 9 10 12 15
+echo "W: $ME: Only you logged in ..." >&2
+
+exit 0
